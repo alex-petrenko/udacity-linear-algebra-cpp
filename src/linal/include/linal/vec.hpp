@@ -2,7 +2,10 @@
 
 #include <cstring>
 #include <cassert>
+#include <numeric>
 #include <initializer_list>
+
+#include <linal/util.hpp>
 
 
 namespace Linal
@@ -136,6 +139,55 @@ public:
         return *this;
     }
 
+    template <typename SCALAR_T>
+    Vec<T> & operator/=(const SCALAR_T &scalar)
+    {
+        *this *= T(1) / scalar;
+        return *this;
+    }
+
+    T normSquared() const
+    {
+        T sum = T();
+        for (int i = 0; i < size; ++i)
+            sum += data[i] * data[i];
+        return sum;
+    }
+
+    T norm() const
+    {
+        return T(sqrt(normSquared()));
+    }
+
+    // Inner product. With member function you can write v.dot({x, y}), which you can't do with operator*.
+    T dot(const Vec<T> &v) const
+    {
+        assert(size == v.size);
+        return std::inner_product(data, data + size, v.data, T(0));  // did you know that STL has such function?
+    }
+
+    T angleToRad(const Vec<T> &v) const
+    {
+        const T normProd = sqrt(normSquared() * v.normSquared());
+        if (normProd)
+            return acos((*this * v) / normProd);
+        else
+            return std::numeric_limits<T>::quiet_NaN();
+    }
+
+    T angleToDegrees(const Vec<T> &v) const
+    {
+        return radToDegrees(angleToRad(v));
+    }
+
+    // does not really work for Vec<int>, but whatever
+    void normalize()
+    {
+        const T normValue = norm();  // cannot normalize zero vector
+        if (normValue)
+            *this /= normValue;
+    }
+
 public:  // friends defined inside class body are also inline
     friend Vec<T> operator+(Vec<T> v, const Vec<T> &w)
     {
@@ -160,6 +212,19 @@ public:  // friends defined inside class body are also inline
     friend Vec<T> operator*(const SCALAR_T &scalar, Vec<T> v)
     {
         return v * scalar;
+    }
+
+    // v * w is a synonim for v.dot(w)
+    friend T operator*(const Vec<T> &v, const Vec<T> &w)
+    {
+        return v.dot(w);
+    }
+
+    template <typename SCALAR_T>
+    friend Vec<T> operator/(Vec<T> v, const SCALAR_T &scalar)
+    {
+        v /= scalar;
+        return v;
     }
 
     friend std::ostream & operator<<(std::ostream &stream, const Vec<T> &v)

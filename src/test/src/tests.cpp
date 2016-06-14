@@ -138,3 +138,59 @@ TEST(vec, testMulScalar)
     const auto mul = 7.41f * Vec<float>({ 1.671f, -1.012f, -0.318f });
     EXPECT_TRUE(mul.almostEqualTo({ 12.3821f, -7.49892f, -2.35638f }));
 }
+
+TEST(vec, testNorm)
+{
+    Vec<double> v{ 1, -1, 1 };
+    EXPECT_EQ(v.normSquared(), 3);
+    EXPECT_EQ(v.norm(), sqrt(3));
+    v.normalize();
+    EXPECT_TRUE(v.almostEqualTo({ 1 / sqrt(3), -1 / sqrt(3), 1 / sqrt(3) }));
+
+    Vec<double> v0{ 0, 0, 0 };
+    v0.normalize();
+    EXPECT_TRUE(v0.equalTo({ 0, 0, 0 }));
+
+    // udacity quiz questions
+    const Vec<float> v1{ -0.221f, 7.437f };
+    EXPECT_FLOAT_EQ(v1.norm(), 7.4402828f);
+    const Vec<float> v2{ 8.813f, -1.331f, -6.247f };
+    EXPECT_FLOAT_EQ(v2.norm(), 10.884187f);
+    Vec<float> v3{ 5.581f, -2.136f };
+    v3.normalize();
+    EXPECT_TRUE(v3.almostEqualTo({ 0.933935f, -0.357442f }));
+    Vec<float> v4{ 1.996f, 3.108f, -4.554f };
+    v4.normalize();
+    EXPECT_TRUE(v4.almostEqualTo({ 0.340401f, 0.530044f, -0.776647f }));
+}
+
+TEST(vec, testDotProduct)
+{
+    Vec<int> v{ 1, 2 }, w{ 3, 4 };
+    EXPECT_EQ(v * w, 3 + 8);
+
+    Vec<float> a{ 10.0f };
+    EXPECT_FLOAT_EQ(a.dot({ 20.0f }), 200.0f);
+
+    // udacity quiz questions
+    const Vec<double> v1{ 7.887, 4.138 }, w1{ -8.802, 6.776 };
+    EXPECT_DOUBLE_EQ(v1 * w1, -41.382286);
+
+    const Vec<double> v2{ -5.955, -4.904, -1.874 }, w2{ -4.496, -8.755, 7.103 };
+    EXPECT_DOUBLE_EQ(v2.dot(w2), 56.397178);
+    EXPECT_DOUBLE_EQ(v2.dot(w2), v2 * w2);
+}
+
+TEST(vec, testAngle)
+{
+    const Vec<float> v{ 1.0f, 2.0f, 3.0f }, w{ 0.0f, 0.0f, 0.0f };
+    EXPECT_TRUE(isnan(v.angleToRad(w)));
+    EXPECT_TRUE(isnan(w.angleToRad(v)));
+    EXPECT_TRUE(isnan(w.angleToDegrees(v)));
+
+    // udacity quiz questions
+    const Vec<float> v1{ 3.183f, -7.627f }, w1{ -2.668f, 5.319f };
+    EXPECT_FLOAT_EQ(v1.angleToRad(w1), 3.0720272f);
+    const Vec<float> v2{ 7.35f, 0.221f, 5.188f }, w2{ 2.751f, 8.259f, 3.985f };
+    EXPECT_FLOAT_EQ(v2.angleToDegrees(w2), 60.2758f);
+}
