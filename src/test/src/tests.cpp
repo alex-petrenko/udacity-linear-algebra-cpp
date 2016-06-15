@@ -194,3 +194,56 @@ TEST(vec, testAngle)
     const Vec<float> v2{ 7.35f, 0.221f, 5.188f }, w2{ 2.751f, 8.259f, 3.985f };
     EXPECT_FLOAT_EQ(v2.angleToDegrees(w2), 60.2758f);
 }
+
+TEST(vec, testParallelOrthogonal)
+{
+    const Vec<float> v{ 1.0f, 2.0f, 3.0f }, w{ 3.0f, 6.0f, 9.0f }, z{ 0.0f, 0.0f, 0.0f };
+    EXPECT_TRUE(v.isParallelTo(w));
+    EXPECT_TRUE(v.isParallelTo(v));
+    EXPECT_TRUE(w.isParallelTo(v));
+    EXPECT_TRUE(w.isParallelTo(w));
+
+    EXPECT_TRUE(v.isParallelTo(z));
+    EXPECT_TRUE(z.isParallelTo(v));
+    EXPECT_TRUE(z.isParallelTo(z));
+    EXPECT_TRUE(z.isOrthogonalTo(z));
+
+    EXPECT_FALSE(v.isOrthogonalTo(w));
+    EXPECT_FALSE(w.isOrthogonalTo(v));
+
+    const Vec<int> vi{ 1, 2 }, wi{ 2, 4 }, vio{ -2, 1 }, zi{ 0, 0 };
+    EXPECT_TRUE(vi.isParallelTo(wi));
+
+    EXPECT_TRUE(vi.isOrthogonalTo(vio));
+    EXPECT_TRUE(vio.isOrthogonalTo(vi));
+    EXPECT_TRUE(vio.isOrthogonalTo(wi));
+
+    EXPECT_TRUE(vi.isOrthogonalTo(zi));
+    EXPECT_TRUE(zi.isOrthogonalTo(vi));
+    EXPECT_TRUE(zi.isOrthogonalTo(zi));
+
+    EXPECT_FALSE(vi.isParallelTo(vio));
+    EXPECT_FALSE(vio.isParallelTo(vi));
+
+    const Vec<double> vd{ 10, 20 }, vdo{ -20, 10 }, zd{ 0, 0 };
+    EXPECT_TRUE(vd.isOrthogonalTo(vdo));
+    EXPECT_TRUE(vdo.isOrthogonalTo(vd));
+    EXPECT_TRUE(vdo.isOrthogonalTo(zd));
+    EXPECT_TRUE(zd.isOrthogonalTo(zd));
+
+    EXPECT_TRUE(zd.isOrthogonalTo(zi));  // conversion from int to double - okay
+
+    // udacity quiz questions
+    const Vec<float> v1 = { -7.579f, -7.88f }, w1 = { 22.737f, 23.64f };  // trying different type of initialization
+    EXPECT_TRUE(v1.isParallelTo(w1));
+    EXPECT_FALSE(v1.isOrthogonalTo(w1));
+    const Vec<float> v2{ -2.029f, 9.97f, 4.172f }, w2{ -9.231f, -6.639f, -7.245f };
+    EXPECT_FALSE(v2.isParallelTo(w2));
+    EXPECT_FALSE(v2.isOrthogonalTo(w2));
+    const Vec<float> v3{ -2.328f, -7.284f, -1.214f }, w3{ -1.821f, 1.072f, -2.94f };
+    EXPECT_FALSE(v3.isParallelTo(w3));
+    EXPECT_TRUE(v3.isOrthogonalTo(w3));
+    const Vec<float> v4{ 2.118f, 4.827f }, w4{ 0.0f, 0.0f };
+    EXPECT_TRUE(v4.isParallelTo(w4));
+    EXPECT_TRUE(v4.isOrthogonalTo(w4));
+}

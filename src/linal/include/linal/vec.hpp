@@ -89,18 +89,37 @@ public:
     }
 
     template<typename ELEM_T>
-    bool almostEqualTo(const Vec<ELEM_T> &v, float eps = 1e-5f) const
+    bool almostEqualTo(const Vec<ELEM_T> &v) const
     {
         assert(size == v.size);
         for (int i = 0; i < size; ++i)
-            if (std::fabs(data[i] - v.data[i]) > eps)
+            if (std::abs(data[i] - v.data[i]) > epsilon())
                 return false;
         return true;
     }
 
-    bool almostEqualTo(const Vec<T> &v, float eps = 1e-5) const
+    bool almostEqualTo(const Vec<T> &v) const
     {
-        return almostEqualTo<T>(v, eps);
+        return almostEqualTo<T>(v);
+    }
+
+    bool isParallelTo(const Vec<T> &v) const
+    {
+        assert(size == v.size);
+        const auto normProd = sqrt(normSquared() * v.normSquared());
+        if (normProd)
+        {
+            const auto cosAngle = (*this * v) / normProd;
+            return std::abs(std::abs(cosAngle) - T(1)) <= epsilon();
+        }
+        else
+            return true;
+    }
+
+    bool isOrthogonalTo(const Vec<T> &v) const
+    {
+        const auto innerProd = *this * v;
+        return std::abs(innerProd) <= epsilon();
     }
 
     T & operator[](int idx)
@@ -156,7 +175,8 @@ public:
 
     T norm() const
     {
-        return T(sqrt(normSquared()));
+        const auto norm = sqrt(normSquared());
+        return norm;
     }
 
     // Inner product. With member function you can write v.dot({x, y}), which you can't do with operator*.
@@ -244,6 +264,16 @@ public:  // friends defined inside class body are also inline
         using std::swap;  // proper use of ADL (argument dependent lookup)
         swap(v.data, w.data);  // if T implements swap it will be selected instead of std::swap
         swap(v.size, w.size);
+    }
+
+private:
+    /* This is okay for educational purposes, but in real library it would be really bad design.
+     * If I ever happen to use this code in production, I should pass eps as parameter to all functions
+     * where it is needed.
+     */
+    static constexpr T epsilon()
+    {
+        return T(1e-5);
     }
 
 private:
