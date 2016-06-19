@@ -178,6 +178,14 @@ public:
         return false;
     }
 
+    bool isZero() const
+    {
+        for (int i = 0; i < size; ++i)
+            if (data[i] >= epsilon())
+                return false;
+        return true;
+    }
+
     /// Synonim of operator==, but allows initializer lists:
     /// v == {x, y};  // does not work
     /// v.equalTo({x, y});  // works
@@ -266,6 +274,21 @@ public:
     }
 
     template <typename S>
+    auto cross(const Vec<S> &v) const
+    {
+        assert(size >= 2 && size <= 3);
+        assert(v.ndim() >= 2 && v.ndim() <= 3);
+        const auto x1 = data[0], y1 = data[1], z1 = size >= 3 ? data[2] : T(0);
+        const auto x2 = v[0], y2 = v[1], z2 = v.ndim() >= 3 ? v[2] : S(0);
+        return Vec<decltype(T() * S())>{(y1 * z2 - z1 * y2), -(x1 * z2 - z1 * x2), (x1 * y2 - y1 * x2)};
+    }
+
+    auto cross(const Vec<T> &v) const
+    {
+        return cross<T>(v);
+    }
+
+    template <typename S>
     auto angleToRad(const Vec<S> &v) const
     {
         const auto normProd = sqrt(normSquared() * v.normSquared());
@@ -319,7 +342,7 @@ public:
         return *this - parallelComponent;
     }
 
-public:  // friends defined inside class body are also inline
+public:  // friends defined inside class body are also inline and can be found through ADL
 
     /// By-element vector addition.
     friend Vec<T> operator+(Vec<T> v, const Vec<T> &w)
@@ -403,6 +426,19 @@ public:  // friends defined inside class body are also inline
         using std::swap;  // proper use of ADL (argument dependent lookup)
         swap(v.data, w.data);  // if T implements swap it will be selected instead of std::swap
         swap(v.size, w.size);
+    }
+
+    template <typename S>
+    friend auto parallelogramArea(const Vec<T> &v, const Vec<S> &w)
+    {
+        return v.cross(w).norm();
+    }
+
+    template <typename S>
+    friend auto triangleArea(const Vec<T> &v, const Vec<S> &w)
+    {
+        const auto parea = parallelogramArea(v, w);
+        return parea * 0.5f;
     }
 
 private:

@@ -63,6 +63,14 @@ TEST(vec, testNaN)
     EXPECT_FALSE(vi.isNaN());
 }
 
+TEST(vec, testZero)
+{
+    const Veci v{ 0, 0 }, w{ 1, 1 };
+    const Vecf vf{ 0.0f, 0.0f }, wf{ 1.0f, 0.0f };
+    EXPECT_TRUE(v.isZero() && !w.isZero());
+    EXPECT_TRUE(vf.isZero() && !wf.isZero());
+}
+
 TEST(vec, testAccess)
 {
     Veci v{ 1, 2 };
@@ -385,4 +393,25 @@ TEST(vec, testProjection)
         EXPECT_TRUE(par3.almostEqualTo({ 1.96852, -2.81076, 0.848085, 2.67981 }));
         EXPECT_TRUE(ort3.almostEqualTo({ 1.04048, -3.36124, 2.84392, -5.18981 }));
     }
+}
+
+TEST(vec, testCross)
+{
+    const Veci v{ 1, 0 }, w{ 0, 1 };
+    const auto vxw = v.cross(w);
+    static_assert(std::is_same_v<decltype(vxw), const Veci>, "Incorrect type of cross product");
+    EXPECT_TRUE(vxw.equalTo({ 0, 0, 1 }));
+    EXPECT_TRUE(w.cross(v).equalTo({ 0, 0, -1 }));
+    EXPECT_TRUE(w.cross(w).isZero());
+
+    EXPECT_EQ(parallelogramArea(w, w), 0);
+    EXPECT_DOUBLE_EQ(triangleArea(w, w), 0.0);
+
+    EXPECT_EQ(parallelogramArea(v, w), 1);
+    EXPECT_EQ(triangleArea(v, w), 0.5);
+
+    std::cout.precision(10);
+    EXPECT_TRUE((Vecd{ 8.462, 7.893, -8.187 }).cross({ 6.984, -5.975, 4.778 }).almostEqualTo({ -11.204571, -97.609444, -105.685162 }));
+    EXPECT_FLOAT_EQ(float(parallelogramArea(Vecd{ -8.987, -9.838, 5.031 }, Vecd{ -4.268, -1.861, -8.866 })), 142.122221f);
+    EXPECT_FLOAT_EQ(float(triangleArea(Vecd{ 1.5, 9.547, 3.691 }, Vecd{ -6.007, 0.124, 5.772 })), 42.5649374f);
 }
