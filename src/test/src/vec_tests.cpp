@@ -54,6 +54,15 @@ TEST(vec, testStr)
     EXPECT_EQ(vstr.str(), "[1, 10, 100, 1000][]");
 }
 
+TEST(vec, testNaN)
+{
+    const Vecf v{ 1.0f, 2.0f }, w(20000, std::numeric_limits<float>::quiet_NaN());
+    const Veci vi{ 0 };
+    EXPECT_FALSE(v.isNaN());
+    EXPECT_TRUE(w.isNaN());
+    EXPECT_FALSE(vi.isNaN());
+}
+
 TEST(vec, testAccess)
 {
     Veci v{ 1, 2 };
@@ -207,8 +216,8 @@ TEST(vec, testNorm)
 
     Vecd v0{ 0, 0, 0 };
     v0.normalize();
-    EXPECT_TRUE(v0.equalTo({ 0, 0, 0 }));
-    EXPECT_TRUE(v0.normalized().equalTo({ 0, 0, 0 }));
+    EXPECT_TRUE(v0.isNaN());
+    EXPECT_TRUE(v0.normalized().isNaN());
 
     const Veci vi{ 3, 4 };
     EXPECT_EQ(vi.norm(), 5);
@@ -358,7 +367,7 @@ TEST(vec, testProjection)
     {
         const Veci v{ 1, 2 }, w{ 0, 0 };
         const auto v1 = v.componentParallelTo(w), v2 = v.componentOrthogonalTo(w);
-        std::cout << v1 << v2;
+        EXPECT_TRUE(v1.isNaN() && v2.isNaN());
     }
 
     // udacity quiz questions

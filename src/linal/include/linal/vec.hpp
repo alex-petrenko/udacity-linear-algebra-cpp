@@ -9,8 +9,6 @@
 #include <linal/sfinae.hpp>
 
 
-// TODO: normalize NAN for zero vector
-
 namespace Linal
 {
 
@@ -29,6 +27,13 @@ public:
         : size(size)
         , data(new T[size])
     {
+    }
+
+    /// Fill vector with same values.
+    explicit Vec(int size, const T &value)
+        : Vec(size)
+    {
+        std::fill(data, data + size, value);
     }
 
     template <typename INIT_T>
@@ -165,6 +170,14 @@ public:
         return *this *= T(1) / scalar;
     }
 
+    bool isNaN() const
+    {
+        for (int i = 0; i < size; ++i)
+            if (isnan(double(data[i])))
+                return true;
+        return false;
+    }
+
     /// Synonim of operator==, but allows initializer lists:
     /// v == {x, y};  // does not work
     /// v.equalTo({x, y});  // works
@@ -221,9 +234,12 @@ public:
     /// Do not use for Vec<int>, this function will work incorrectly. Use "normalized" instead.
     void normalize()
     {
+        static_assert(std::is_floating_point_v<T>, "Normalize does not work for integral types");
         const auto normValue = norm();  // cannot normalize zero vector
         if (normValue)
             *this /= normValue;  // won't work for Vec<int>
+        else
+            std::fill(data, data + size, std::numeric_limits<T>::quiet_NaN());  // can't normalize zero vector
     }
     
     auto normalized() const
@@ -233,7 +249,7 @@ public:
         if (normValue)
             return *this / normValue;
         else
-            return static_cast<RESULT_T>(*this);
+            return RESULT_T(size, std::numeric_limits<RESULT_T::ElementType>::quiet_NaN());
     }
 
     template <typename S>
