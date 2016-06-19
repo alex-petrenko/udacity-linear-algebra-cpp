@@ -6,7 +6,10 @@
 #include <initializer_list>
 
 #include <linal/util.hpp>
+#include <linal/sfinae.hpp>
 
+
+// TODO: normalize NAN for zero vector
 
 namespace Linal
 {
@@ -14,44 +17,51 @@ namespace Linal
 template<typename T> class Vec
 {
 public:
+    typedef T ElementType;
+
+public:
     Vec()
+    {
+    }
+
+    /// Explicit constructor does not allow conversion from Vec to int (which does not make sense).
+    explicit Vec(int size)
+        : size(size)
+        , data(new T[size])
     {
     }
 
     template <typename INIT_T>
     Vec(std::initializer_list<INIT_T> l)
-        : size(l.size())
+        : Vec(l.size())
     {
-        data = new T[size];
         std::copy(l.begin(), l.end(), data);
     }
 
-    // copy constructor
+    /// Copy constructor.
     Vec(const Vec<T> &v)
-        : size(v.size)
+        : Vec(v.size)
     {
-        data = new T[size];
         memcpy(data, v.data, size * sizeof(T));
     }
 
-    // template copy constructor (allows type cast)
+    /// Template copy constructor (allows type cast).
     template <typename INIT_T>
     Vec(const Vec<INIT_T> &v)
-        : size(v.ndim())
+        : Vec(v.ndim())
     {
-        data = new T[size];
         for (int i = 0; i < size; ++i)
             data[i] = v[i];  // INIT_T should be castable to T
     }
 
-    // move constructor
+    /// Move constructor.
     Vec(Vec<T> &&v)
     {
         swap(*this, v);
     }
 
-    // copy-assignment using copy-and-swap idiom
-    // if "v" is initialized with rvalue, it will be move-constructed (see above)
+    /// Copy-assignment using copy-and-swap idiom.
+    /// If "v" is initialized with rvalue, it will be move-constructed (see above).
     Vec<T> & operator=(Vec<T> v)
     {
         swap(*this, v);
@@ -63,63 +73,22 @@ public:
         if (data) delete[] data;
     }
 
+    /// Number of dimensions.
     int ndim() const
     {
         return size;
     }
 
-    bool operator==(const Vec<T> &v) const
+    /// Access raw vector data. Can be used instead of iterators.
+    T * ptr()
     {
-        assert(size == v.size);
-        return memcmp(data, v.data, size * sizeof(T)) == 0;
+        return data;
     }
 
-    bool operator!=(const Vec<T> &v) const
+    /// Use instead of const iterator.
+    const T * ptr() const
     {
-        return !(*this == v);
-    }
-
-    /* Synonim of operator==, but allows initializer lists:
-     * v == {x, y};  // does not work
-     * v.equalTo({x, y});  // works
-     */
-    bool equalTo(const Vec<T> &v) const
-    {
-        return *this == v;
-    }
-
-    template<typename ELEM_T>
-    bool almostEqualTo(const Vec<ELEM_T> &v) const
-    {
-        assert(size == v.size);
-        for (int i = 0; i < size; ++i)
-            if (std::abs(data[i] - v.data[i]) > epsilon())
-                return false;
-        return true;
-    }
-
-    bool almostEqualTo(const Vec<T> &v) const
-    {
-        return almostEqualTo<T>(v);
-    }
-
-    bool isParallelTo(const Vec<T> &v) const
-    {
-        assert(size == v.size);
-        const auto normProd = sqrt(normSquared() * v.normSquared());
-        if (normProd)
-        {
-            const auto cosAngle = (*this * v) / normProd;
-            return std::abs(std::abs(cosAngle) - T(1)) <= epsilon();
-        }
-        else
-            return true;
-    }
-
-    bool isOrthogonalTo(const Vec<T> &v) const
-    {
-        const auto innerProd = *this * v;
-        return std::abs(innerProd) <= epsilon();
+        return data;
     }
 
     T & operator[](int idx)
@@ -134,20 +103,52 @@ public:
         return data[idx];
     }
 
-    Vec<T> & operator+=(const Vec<T> &v)
+    bool operator==(const Vec<T> &v) const
     {
         assert(size == v.size);
+        return memcmp(data, v.data, size * sizeof(T)) == 0;
+    }
+
+    /// Allows comparison of vectors of different size, as long as their elements are comparable.
+    template <typename S>
+    bool operator==(const Vec<S> &v) const
+    {
+        assert(size == v.ndim());
+        return std::equal(data, data + size, v.ptr());
+    }
+
+    template <typename S>
+    bool operator!=(const Vec<S> &v) const
+    {
+        return !(*this == v);  // will call optimized Vec<T> version if T and S are the same
+    }
+
+    template <typename S>
+    Vec<T> & operator+=(const Vec<S> &v)
+    {
+        assert(size == v.ndim());
         for (int i = 0; i < size; ++i)
-            data[i] += v.data[i];
+            data[i] += v[i];
+        return *this;
+    }
+
+    Vec<T> & operator+=(const Vec<T> &v)
+    {
+        return operator+=<T>(v);
+    }
+
+    template <typename S>
+    Vec<T> & operator-=(const Vec<S> &v)
+    {
+        assert(size == v.ndim());
+        for (int i = 0; i < size; ++i)
+            data[i] -= v[i];
         return *this;
     }
 
     Vec<T> & operator-=(const Vec<T> &v)
     {
-        assert(size == v.size);
-        for (int i = 0; i < size; ++i)
-            data[i] -= v.data[i];
-        return *this;
+        return operator-=<T>(v);
     }
 
     template <typename SCALAR_T>
@@ -157,14 +158,52 @@ public:
             data[i] *= scalar;
         return *this;
     }
-
+    
     template <typename SCALAR_T>
     Vec<T> & operator/=(const SCALAR_T &scalar)
     {
-        *this *= T(1) / scalar;
-        return *this;
+        return *this *= T(1) / scalar;
     }
 
+    /// Synonim of operator==, but allows initializer lists:
+    /// v == {x, y};  // does not work
+    /// v.equalTo({x, y});  // works
+    bool equalTo(const Vec<T> &v) const
+    {
+        return *this == v;
+    }
+
+    /// This version does not allow initializer lists, because C++ cannot deduce
+    /// type 'S' from the elements of initializer list. The previous version will do.
+    /// See http://en.cppreference.com/w/cpp/language/template_argument_deduction (non-deduced contexts).
+    /// This means that in this code:
+    /// Vec<double> v{1.0, 2.0}; v.equalTo({int(1), int(2)});
+    /// the temporary Vec<double> will be created for comparison. But in this case:
+    /// Vec<int> vi{1, 2}; v.equalTo(vi);
+    /// Vec<int> and Vec<double> will be compared directly element-by-element. See tests for reference.
+    template <typename S>
+    bool equalTo(const Vec<S> &v) const
+    {
+        return *this == v;
+    }
+
+    template <typename S>
+    bool almostEqualTo(const Vec<S> &v) const
+    {
+        assert(size == v.ndim());
+        for (int i = 0; i < size; ++i)
+            if (std::abs(data[i] - v[i]) > epsilon())
+                return false;
+        return true;
+    }
+
+    /// This version is mostly needed to allow initializer lists as arguments.
+    bool almostEqualTo(const Vec<T> &v) const
+    {
+        return almostEqualTo<T>(v);  // reuse more generic template
+    }
+
+    /// Sometimes it is not required to take square root of norm, makes sense to keep this as separate method.
     T normSquared() const
     {
         T sum = T();
@@ -172,47 +211,114 @@ public:
             sum += data[i] * data[i];
         return sum;
     }
-
-    T norm() const
+    
+    auto norm() const
     {
-        const auto norm = sqrt(normSquared());
-        return norm;
+        // auto will also work for Vec<int>, while the simple T norm() wouldn't work correctly.
+        return sqrt(normSquared());
     }
 
-    // Inner product. With member function you can write v.dot({x, y}), which you can't do with operator*.
-    T dot(const Vec<T> &v) const
+    /// Do not use for Vec<int>, this function will work incorrectly. Use "normalized" instead.
+    void normalize()
     {
-        assert(size == v.size);
-        return std::inner_product(data, data + size, v.data, T(0));  // did you know that STL has such function?
+        const auto normValue = norm();  // cannot normalize zero vector
+        if (normValue)
+            *this /= normValue;  // won't work for Vec<int>
     }
-
-    T angleToRad(const Vec<T> &v) const
+    
+    auto normalized() const
     {
-        const T normProd = sqrt(normSquared() * v.normSquared());
-        if (normProd)
-            return acos((*this * v) / normProd);
+        const auto normValue = norm();
+        using RESULT_T = decltype(*this / normValue);
+        if (normValue)
+            return *this / normValue;
         else
-            return std::numeric_limits<T>::quiet_NaN();
+            return static_cast<RESULT_T>(*this);
     }
 
-    T angleToDegrees(const Vec<T> &v) const
+    template <typename S>
+    auto dot(const Vec<S> &v) const
+    {
+        assert(size == v.ndim());
+        return std::inner_product(ptr(), ptr() + size, v.ptr(), decltype(T() * S())(0));  // did you know that STL has such function?
+    }
+
+    /// Inner product. With this method you can write v.dot({x, y}), which you can't do with operator*.
+    auto dot(const Vec<T> &v) const
+    {
+        return dot<T>(v);
+    }
+
+    template <typename S>
+    auto angleToRad(const Vec<S> &v) const
+    {
+        const auto normProd = sqrt(normSquared() * v.normSquared());
+        if (normProd)
+            return acos(v.dot(*this) / normProd);
+        else
+            return std::numeric_limits<decltype(normProd)>::quiet_NaN();
+    }
+
+    template <typename S>
+    auto angleToDegrees(const Vec<S> &v) const
     {
         return radToDegrees(angleToRad(v));
     }
 
-    // does not really work for Vec<int>, but whatever
-    void normalize()
+    template <typename S>
+    bool isParallelTo(const Vec<S> &v) const
     {
-        const T normValue = norm();  // cannot normalize zero vector
-        if (normValue)
-            *this /= normValue;
+        assert(size == v.ndim());
+        const auto normProd = sqrt(normSquared() * v.normSquared());
+        if (normProd)
+        {
+            // not the fastest way, I know
+            const auto cosAngle = (*this * v) / normProd;
+            const auto diff = std::abs(cosAngle) - decltype(normProd)(1);
+            return std::abs(diff) <= epsilon();
+        }
+        else
+            return true;
+    }
+
+    template <typename S>
+    bool isOrthogonalTo(const Vec<S> &v) const
+    {
+        const auto innerProd = *this * v;
+        return std::abs(innerProd) <= epsilon();
+    }
+
+    template <typename S>
+    auto componentParallelTo(const Vec<S> &v) const
+    {
+        const auto vn = v.normalized();
+        const auto magnitude = *this * vn;  // scalar product of *this and unit vector pointing in direction of v
+        return magnitude * vn;
+    }
+
+    template <typename S>
+    auto componentOrthogonalTo(const Vec<S> &v) const
+    {
+        const auto parallelComponent = componentParallelTo(v);
+        return *this - parallelComponent;
     }
 
 public:  // friends defined inside class body are also inline
+
+    /// By-element vector addition.
     friend Vec<T> operator+(Vec<T> v, const Vec<T> &w)
     {
         v += w;  // reuse compound assignment
         return v;  // return the result by value (uses move constructor)
+    }
+
+    /// By-element vector addition.
+    /// Allows addition of two vectors of different types and deduces the result type accordingly.
+    /// E. g. Vec<int> + Vec<double> produces Vec<double>, and Vec<float> + Vec<double> produces Vec<double>.
+    template <typename S>
+    friend auto operator+(const Vec<T> &v, const Vec<S> &w)
+    {
+        return v.additionWithMultiplier<S, 1>(w);
     }
 
     friend Vec<T> operator-(Vec<T> v, const Vec<T> &w)
@@ -221,30 +327,47 @@ public:  // friends defined inside class body are also inline
         return v;  // return the result by value (uses move constructor)
     }
 
-    template <typename SCALAR_T>
-    friend Vec<T> operator*(Vec<T> v, const SCALAR_T &scalar)
+    template <typename S>
+    friend auto operator-(const Vec<T> &v, const Vec<S> &w)
     {
-        v *= scalar;
-        return v;
+        return v.additionWithMultiplier<S, -1>(w);
     }
 
-    template <typename SCALAR_T>
-    friend Vec<T> operator*(const SCALAR_T &scalar, Vec<T> v)
+    /// Multiplication by scalar.
+    /// Disable this overload if SCALAR_T is Vec to avoid overload ambiguity. Use SFINAE trick for that.
+    template <typename SCALAR_T, typename = std::enable_if_t<!IsSpecializationOfV<Vec, SCALAR_T>>>
+    friend auto operator*(const Vec<T> &v, const SCALAR_T &scalar)
+    {
+        using RESULT_T = decltype(T(1) * scalar);  // deducing type for result
+        Vec<RESULT_T> newVec(v.size);
+        for (int i = 0; i < v.size; ++i)
+            newVec[i] = v[i] * scalar;
+
+        return newVec;
+    }
+
+    template <typename SCALAR_T, typename = std::enable_if_t<!IsSpecializationOfV<Vec, SCALAR_T>>>
+    friend auto operator*(const SCALAR_T &scalar, Vec<T> v)
     {
         return v * scalar;
     }
 
-    // v * w is a synonim for v.dot(w)
+    template <typename SCALAR_T>
+    friend auto operator/(const Vec<T> &v, const SCALAR_T &scalar)
+    {
+        return v * (SCALAR_T(1) / scalar);
+    }
+
+    /// v * w is a synonim for v.dot(w).
+    template <typename S>
+    friend auto operator*(const Vec<T> &v, const Vec<S> &w)
+    {
+        return v.dot<S>(w);
+    }
+
     friend T operator*(const Vec<T> &v, const Vec<T> &w)
     {
         return v.dot(w);
-    }
-
-    template <typename SCALAR_T>
-    friend Vec<T> operator/(Vec<T> v, const SCALAR_T &scalar)
-    {
-        v /= scalar;
-        return v;
     }
 
     friend std::ostream & operator<<(std::ostream &stream, const Vec<T> &v)
@@ -267,18 +390,36 @@ public:  // friends defined inside class body are also inline
     }
 
 private:
-    /* This is okay for educational purposes, but in real library it would be really bad design.
-     * If I ever happen to use this code in production, I should pass eps as parameter to all functions
-     * where it is needed.
-     */
-    static constexpr T epsilon()
+    /// This is okay for educational purposes, but in real library it would be really bad design.
+    /// If I ever happen to use this code in production, I should pass eps as parameter to all functions
+    /// where it is needed (or use another mechanism).
+    static constexpr double epsilon()
     {
-        return T(1e-5);
+        return 1e-5;
+    }
+
+    /// Common code of operator+ and operator-.
+    /// This is an implementation detail, that's why it is a hidden private member.
+    template <typename S, char MULT>
+    auto additionWithMultiplier(const Vec<S> &w) const
+    {
+        using RESULT_T = decltype(T() + S());
+        Vec<RESULT_T> res(size);
+        for (int i = 0; i < size; ++i)
+            res[i] = data[i] + MULT * w[i];
+        return res;
     }
 
 private:
-    T *data = nullptr;
     int size = 0;
+    T *data = nullptr;
 };
+
+
+// Using alias for convenience.
+using Veci = Vec<int>;
+using Vecs = Vec<short>;
+using Vecf = Vec<float>;
+using Vecd = Vec<double>;
 
 }

@@ -1,3 +1,12 @@
 include_directories(${liblinal_SOURCE_DIR}/include)
-add_executable(test_app src/tests.cpp)
+
+set(SOURCES
+    src/vec_tests.cpp
+    src/util_tests.cpp
+)
+
+set(HEADERS
+)
+
+add_executable(test_app ${SOURCES} ${HEADERS})
 target_link_libraries(test_app gtest gtest_main)

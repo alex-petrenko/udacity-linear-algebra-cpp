@@ -1,11 +1,12 @@
 project(liblinal VERSION 0.1 LANGUAGES CXX)
 
-SET(SOURCES
+set(SOURCES
 )
 
-SET(HEADERS
+set(HEADERS
     include/linal/vec.hpp
     include/linal/util.hpp
+    include/linal/sfinae.hpp
 )
 
 add_library(linal ${SOURCES} ${HEADERS})
