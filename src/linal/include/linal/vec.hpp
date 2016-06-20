@@ -12,7 +12,8 @@
 namespace Linal
 {
 
-template<typename T> class Vec
+template<typename T>
+class Vec
 {
 public:
     typedef T ElementType;
@@ -181,7 +182,7 @@ public:
     bool isZero() const
     {
         for (int i = 0; i < size; ++i)
-            if (data[i] >= epsilon())
+            if (std::abs(data[i]) >= epsilon())
                 return false;
         return true;
     }

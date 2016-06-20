@@ -2,6 +2,7 @@ include_directories(${liblinal_SOURCE_DIR}/include)
 
 set(SOURCES
     src/vec_tests.cpp
+    src/line_tests.cpp
     src/util_tests.cpp
 )
 

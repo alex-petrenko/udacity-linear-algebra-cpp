@@ -5,6 +5,7 @@ set(SOURCES
 
 set(HEADERS
     include/linal/vec.hpp
+    include/linal/line.hpp
     include/linal/util.hpp
     include/linal/sfinae.hpp
 )
