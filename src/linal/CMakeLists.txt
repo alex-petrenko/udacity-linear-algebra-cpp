@@ -5,7 +5,9 @@ set(SOURCES
 
 set(HEADERS
     include/linal/vec.hpp
+    include/linal/linear_obj.hpp
     include/linal/line.hpp
+    include/linal/plane.hpp
     include/linal/util.hpp
     include/linal/sfinae.hpp
 )
