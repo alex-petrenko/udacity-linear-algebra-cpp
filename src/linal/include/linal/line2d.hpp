@@ -1,6 +1,6 @@
 #pragma once
 
-#include <linal/linear_obj.hpp>
+#include <linal/linear_equation.hpp>
 
 
 namespace Linal
@@ -39,11 +39,11 @@ public:
 };
 
 template <typename T>
-class Line2D : public LinearObj<T>
+class Line2D : public LinearEquation<T>
 {
 public:
     explicit Line2D(const Vec<T> &norm, const T &c)
-        : LinearObj(norm, c)
+        : LinearEquation(norm, c)
     {
         assert(norm.ndim() == 2);
     }

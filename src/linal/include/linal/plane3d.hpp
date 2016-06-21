@@ -1,17 +1,17 @@
 #pragma once
 
-#include <linal/linear_obj.hpp>
+#include <linal/linear_equation.hpp>
 
 
 namespace Linal
 {
 
 template <typename T>
-class Plane3D : public LinearObj<T>
+class Plane3D : public LinearEquation<T>
 {
 public:
     explicit Plane3D(const Vec<T> &norm, const T &c)
-        : LinearObj(norm, c)
+        : LinearEquation(norm, c)
     {
         assert(norm.ndim() == 3);
     }

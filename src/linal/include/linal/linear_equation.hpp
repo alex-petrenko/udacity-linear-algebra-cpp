@@ -17,10 +17,10 @@ enum class IntersectionType
 /// Representations of plane in 3D and line in 2D have a lot in common.
 /// This class has common code of both implementations.
 template <typename T>
-class LinearObj
+class LinearEquation
 {
 public:
-    explicit LinearObj(const Vec<T> &norm, const T &c)
+    explicit LinearEquation(const Vec<T> &norm, const T &c)
         : norm(norm)
         , c(c)
     {
@@ -59,14 +59,14 @@ public:
     }
 
     template <typename S>
-    bool isParallelTo(const LinearObj<S> &obj) const
+    bool isParallelTo(const LinearEquation<S> &obj) const
     {
         assert(norm.ndim() == obj.normVector().ndim());
         return norm.isParallelTo(obj.normVector());
     }
 
     template <typename S>
-    bool isSameAs(const LinearObj<S> &obj) const
+    bool isSameAs(const LinearEquation<S> &obj) const
     {
         if (!isParallelTo(obj))
             return false;
@@ -88,7 +88,7 @@ public:
     }
 
     template <typename S>
-    IntersectionType getIntersectionType(const LinearObj<S> &obj) const
+    IntersectionType getIntersectionType(const LinearEquation<S> &obj) const
     {
         assert(norm.ndim() == obj.normVector().ndim());
         if (isSameAs(obj))

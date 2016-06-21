@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <linal/plane.hpp>
+#include <linal/plane3d.hpp>
 
 
 using namespace Linal;

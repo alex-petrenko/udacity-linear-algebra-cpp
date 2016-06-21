@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <linal/line.hpp>
+#include <linal/line2d.hpp>
 
 
 using namespace Linal;
