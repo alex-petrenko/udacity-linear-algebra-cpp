@@ -20,8 +20,9 @@ template <typename T>
 class LinearEquation
 {
 public:
-    explicit LinearEquation(const Vec<T> &norm, const T &c)
-        : norm(norm)
+    /// Vector passed by value guarantees that no copies will be made if an rvalue reference is passed.
+    explicit LinearEquation(Vec<T> norm, const T &c)
+        : norm(std::move(norm))
         , c(c)
     {
     }

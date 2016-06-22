@@ -41,6 +41,9 @@ public:
     Vec(std::initializer_list<INIT_T> l)
         : Vec(l.size())
     {
+        /* Currently there's no way to move from initializer_list, so we're copying.
+         * http://stackoverflow.com/questions/8193102/initializer-list-and-move-semantics
+         */
         std::copy(l.begin(), l.end(), data);
     }
 
@@ -68,6 +71,7 @@ public:
 
     /// Copy-assignment using copy-and-swap idiom.
     /// If "v" is initialized with rvalue, it will be move-constructed (see above).
+    /// Due to this function there's no need to define separate move assignment operator.
     Vec<T> & operator=(Vec<T> v)
     {
         swap(*this, v);
