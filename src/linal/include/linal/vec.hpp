@@ -9,6 +9,9 @@
 #include <linal/sfinae.hpp>
 
 
+// TODO: use universal init in ctors
+
+
 namespace Linal
 {
 
@@ -19,9 +22,7 @@ public:
     typedef T ElementType;
 
 public:
-    Vec()
-    {
-    }
+    Vec() = default;
 
     /// Explicit constructor does not allow conversion from Vec to int (which does not make sense).
     explicit Vec(int size)
@@ -119,7 +120,7 @@ public:
         return memcmp(data, v.data, size * sizeof(T)) == 0;
     }
 
-    /// Allows comparison of vectors of different size, as long as their elements are comparable.
+    /// Allows comparison of vectors of different type, as long as their elements are comparable.
     template <typename S>
     bool operator==(const Vec<S> &v) const
     {

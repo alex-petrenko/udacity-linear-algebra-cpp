@@ -50,6 +50,19 @@ public:
         return *this;
     }
 
+    template <typename S>
+    bool operator==(const LinearEquation<S> &eq) const
+    {
+        assert(norm.ndim() == eq.normVector().ndim());
+        return norm == eq.normVector() && c == eq.constTerm();
+    }
+
+    template <typename S>
+    bool operator!=(const LinearEquation<S> &eq) const
+    {
+        return !(*this == eq);
+    }
+
     Vec<T> & normVector()
     {
         return norm;

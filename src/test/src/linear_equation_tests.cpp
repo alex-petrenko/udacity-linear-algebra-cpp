@@ -39,6 +39,18 @@ TEST(linearEquation, testCtor)
     }
 }
 
+TEST(LinearEquation, testEq)
+{
+    LinearEquation<int> eq1{ {1, 2}, 3 }, eq2{ {1, 2}, 3 }, eq3{ {0, 0}, 0 };
+    LinearEquation<double> eqd{ {1, 2}, 3 };
+    EXPECT_EQ(eq1, eq1);
+    EXPECT_EQ(eq1, eq2);
+    EXPECT_NE(eq1, eq3);
+    EXPECT_EQ(eq1, eqd);
+    EXPECT_EQ(eqd, eq1);
+    EXPECT_NE(eq3, eqd);
+}
+
 TEST(linearEquation, testSwap)
 {
     LinearEquation<int> eq1{ {1, 2}, 3 }, eq2{ {0, -1}, 0 };

@@ -29,6 +29,13 @@ public:
         return eqs[idx];
     }
 
+    void swapRows(int i, int j)
+    {
+        assert(i >= 0 && i < int(eqs.size()) && j >= 0 && j < int(eqs.size()));
+        assert(eqs[i].normVector().ndim() == eqs[j].normVector().ndim());
+        swap(eqs[i], eqs[j]);  // very cheap operation
+    }
+
 private:
     std::vector<LinearEquation<T>> eqs;
 };
