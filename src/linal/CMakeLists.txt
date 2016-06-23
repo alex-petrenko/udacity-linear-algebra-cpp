@@ -6,6 +6,7 @@ set(SOURCES
 set(HEADERS
     include/linal/vec.hpp
     include/linal/linear_equation.hpp
+    include/linal/linear_system.hpp
     include/linal/line2d.hpp
     include/linal/plane3d.hpp
     include/linal/util.hpp

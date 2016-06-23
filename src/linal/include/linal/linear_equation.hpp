@@ -20,11 +20,34 @@ template <typename T>
 class LinearEquation
 {
 public:
+    /// Force generation of default ctor. Required for stl containers.
+    LinearEquation() = default;
+
     /// Vector passed by value guarantees that no copies will be made if an rvalue reference is passed.
-    explicit LinearEquation(Vec<T> norm, const T &c)
+    LinearEquation(Vec<T> norm, const T &c)
         : norm(std::move(norm))
         , c(c)
     {
+    }
+
+    /// Copy constructor.
+    LinearEquation(const LinearEquation<T> &eq)
+        : norm(eq.norm)
+        , c(eq.c)
+    {
+    }
+
+    /// Move constructor.
+    LinearEquation(LinearEquation<T> &&eq)
+    {
+        swap(*this, eq);
+    }
+
+    /// Copy-assignment using copy-and-swap idiom.
+    LinearEquation<T> & operator=(LinearEquation<T> eq)
+    {
+        swap(*this, eq);
+        return *this;
     }
 
     Vec<T> & normVector()
@@ -98,6 +121,14 @@ public:
             return IntersectionType::PARALLEL;
 
         return IntersectionType::INTERSECT;
+    }
+
+public:  // friends defined inside class body are also inline and can be found through ADL
+    friend void swap(LinearEquation<T> &eq1, LinearEquation<T> &eq2)
+    {
+        using std::swap;  // proper use of ADL (argument dependent lookup)
+        swap(eq1.norm, eq2.norm);  // should call cheap Vec's swap
+        swap(eq1.c, eq2.c);
     }
 
 protected:

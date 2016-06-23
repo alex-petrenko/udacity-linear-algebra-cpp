@@ -32,9 +32,25 @@ TEST(linearEquation, testCtor)
 
     {
         const Veci v{ 1, 2 };
-        // Since 'v' is const it cannot be moved, instead copy-ctor is called, and then temporary is moved to eq.norm (COPY+MOVE)
+        // Since 'v' is const it can't be moved, instead copy-ctor is called, and then temporary is moved (COPY+MOVE)
         const LinearEquation<int> eq{ std::move(v), 10 };
         EXPECT_TRUE(eq.normVector() == v && eq.constTerm() == 10);
         EXPECT_TRUE(v.equalTo({ 1, 2 }));
     }
+}
+
+TEST(linearEquation, testSwap)
+{
+    LinearEquation<int> eq1{ {1, 2}, 3 }, eq2{ {0, -1}, 0 };
+    swap(eq1, eq2);
+    EXPECT_TRUE(eq1.normVector().equalTo({ 0, -1 }) && eq1.constTerm() == 0);
+    EXPECT_TRUE(eq2.normVector().equalTo({ 1, 2 }) && eq2.constTerm() == 3);
+}
+
+TEST(linearEquation, testMove)
+{
+    LinearEquation<int> eq1{ {1, 2}, 3 };
+    LinearEquation<int> eq2 = std::move(eq1);  // eq1 should be zero after move
+    EXPECT_TRUE(eq1.normVector().ndim() == 0);
+    EXPECT_TRUE(eq2.normVector().equalTo({ 1, 2 }) && eq2.constTerm() == 3);
 }
