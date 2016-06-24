@@ -26,14 +26,14 @@ public:
     /// Vector passed by value guarantees that no copies will be made if an rvalue reference is passed.
     LinearEquation(Vec<T> norm, const T &c)
         : norm(std::move(norm))
-        , c(c)
+        , c{ c }
     {
     }
 
     /// Copy constructor.
     LinearEquation(const LinearEquation<T> &eq)
         : norm(eq.norm)
-        , c(eq.c)
+        , c{ eq.c }
     {
     }
 
@@ -63,6 +63,25 @@ public:
         return !(*this == eq);
     }
 
+    template <typename SCALAR_T>
+    LinearEquation<T> & operator*=(const SCALAR_T &scalar)
+    {
+        norm *= scalar, c *= scalar;
+        return *this;
+    }
+
+    /// See Vec<T> comments to understand why two versions of this function are required.
+    bool equalTo(const LinearEquation<T> &eq) const
+    {
+        return *this == eq;
+    }
+
+    template <typename S>
+    bool equalTo(const LinearEquation<S> &eq) const
+    {
+        return *this == eq;
+    }
+
     Vec<T> & normVector()
     {
         return norm;
@@ -76,6 +95,15 @@ public:
     T constTerm() const
     {
         return c;
+    }
+
+    template <typename S, typename SCALAR_T>
+    void add(const LinearEquation<S> &eq, const SCALAR_T &multiplier)
+    {
+        assert(eq.normVector().ndim() == norm.ndim());
+        for (int i = 0; i < norm.ndim(); ++i)
+            norm[i] += eq.normVector()[i] * multiplier;
+        c += eq.constTerm() * multiplier;
     }
 
     /// Return arbitrary point lying on the line/plane.

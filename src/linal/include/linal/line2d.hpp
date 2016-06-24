@@ -42,8 +42,8 @@ template <typename T>
 class Line2D : public LinearEquation<T>
 {
 public:
-    explicit Line2D(const Vec<T> &norm, const T &c)
-        : LinearEquation(norm, c)
+    explicit Line2D(const Vec<T> &&norm, const T &c)
+        : LinearEquation(std::forward<const Vec<T>>(norm), c)
     {
         assert(norm.ndim() == 2);
     }

@@ -9,9 +9,6 @@
 #include <linal/sfinae.hpp>
 
 
-// TODO: use universal init in ctors
-
-
 namespace Linal
 {
 
@@ -26,8 +23,8 @@ public:
 
     /// Explicit constructor does not allow conversion from Vec to int (which does not make sense).
     explicit Vec(int size)
-        : size(size)
-        , data(new T[size])
+        : size{ size }
+        , data{ new T[size] }
     {
     }
 
@@ -233,7 +230,7 @@ public:
     /// Sometimes it is not required to take square root of norm, makes sense to keep this as separate method.
     T normSquared() const
     {
-        T sum = T();
+        T sum = T{};
         for (int i = 0; i < size; ++i)
             sum += data[i] * data[i];
         return sum;
@@ -286,7 +283,7 @@ public:
         assert(v.ndim() >= 2 && v.ndim() <= 3);
         const auto x1 = data[0], y1 = data[1], z1 = size >= 3 ? data[2] : T(0);
         const auto x2 = v[0], y2 = v[1], z2 = v.ndim() >= 3 ? v[2] : S(0);
-        return Vec<decltype(T() * S())>{(y1 * z2 - z1 * y2), -(x1 * z2 - z1 * x2), (x1 * y2 - y1 * x2)};
+        return Vec<decltype(T{} * S{})>{(y1 * z2 - z1 * y2), -(x1 * z2 - z1 * x2), (x1 * y2 - y1 * x2)};
     }
 
     auto cross(const Vec<T> &v) const

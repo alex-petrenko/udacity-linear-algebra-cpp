@@ -37,4 +37,22 @@ TEST(linearSystem, testRowOperations)
     LinearSystem<double> s{ p0, p1, p2, p3 };
     s.swapRows(0, 1);
     EXPECT_TRUE(s[0] == p1 && s[1] == p0 && s[2] == p2 && s[3] == p3);
+    s.swapRows(1, 3);
+    EXPECT_TRUE(s[0] == p1 && s[1] == p3 && s[2] == p2 && s[3] == p0);
+    s.swapRows(3, 1);
+    EXPECT_TRUE(s[0] == p1 && s[1] == p0 && s[2] == p2 && s[3] == p3);
+
+    s[0] *= 1;
+    EXPECT_TRUE(s[0] == p1 && s[1] == p0 && s[2] == p2 && s[3] == p3);
+    s[2] *= -1;
+    EXPECT_TRUE(s[0] == p1 && s[1] == p0 && s[2].equalTo({ {-1, -1, 1}, -3 }) && s[3] == p3);
+    s[1] *= 10;
+    EXPECT_TRUE(s[0] == p1 && s[1].equalTo({ { 10, 10, 10 }, 10 }) && s[2].equalTo({ { -1, -1, 1 }, -3 }) && s[3] == p3);
+
+    s[0].add(s[1], 0);
+    EXPECT_TRUE(s[0] == p1 && s[1].equalTo({ { 10, 10, 10 }, 10 }) && s[2].equalTo({ { -1, -1, 1 }, -3 }) && s[3] == p3);
+    s[1].add(s[0], 1);
+    EXPECT_TRUE(s[0] == p1 && s[1].equalTo({ { 10, 11, 10 }, 12 }) && s[2].equalTo({ { -1, -1, 1 }, -3 }) && s[3] == p3);
+    s[0].add(s[1], -1);
+    EXPECT_TRUE(s[0].equalTo({ { -10, -10, -10 }, -10 }) && s[1].equalTo({ { 10, 11, 10 }, 12 }) && s[2].equalTo({ { -1, -1, 1 }, -3 }) && s[3] == p3);
 }
