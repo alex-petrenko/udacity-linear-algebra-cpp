@@ -56,3 +56,13 @@ TEST(linearSystem, testRowOperations)
     s[0].add(s[1], -1);
     EXPECT_TRUE(s[0].equalTo({ { -10, -10, -10 }, -10 }) && s[1].equalTo({ { 10, 11, 10 }, 12 }) && s[2].equalTo({ { -1, -1, 1 }, -3 }) && s[3] == p3);
 }
+
+TEST(linearSystem, testTriangularForm)
+{
+    {
+        const Plane3f p1{ {1.0f, 1.0f, 1.0f}, 1.0f }, p2{ { 0.0f, 1.0f, 1.0f }, 2.0f };
+        LinearSystem<float> s{ p1, p2 };
+        s.computeTriangularForm();
+        EXPECT_TRUE(s[0] == p1 && s[1] == p2);
+    }
+}

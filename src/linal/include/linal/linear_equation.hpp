@@ -97,6 +97,19 @@ public:
         return c;
     }
 
+    int ndim() const
+    {
+        return norm.ndim();
+    }
+
+    int firstNonZeroIndex() const
+    {
+        for (int i = 0; i < norm.ndim(); ++i)
+            if (norm[i] > epsilon())
+                return i;
+        return -1;
+    }
+
     template <typename S, typename SCALAR_T>
     void add(const LinearEquation<S> &eq, const SCALAR_T &multiplier)
     {
