@@ -65,4 +65,25 @@ TEST(linearSystem, testTriangularForm)
         s.computeTriangularForm();
         EXPECT_TRUE(s[0] == p1 && s[1] == p2);
     }
+
+    {
+        const Plane3d p1{ { 1, 1, 1 }, 1 }, p2{ { 1, 1, 1 }, 2 };
+        LinearSystem<double> s{ p1, p2 };
+        s.computeTriangularForm();
+        EXPECT_TRUE(s[0] == p1 && s[1].equalTo({ {0, 0, 0}, 1 }));
+    }
+
+    {
+        const Plane3d p1{ {1, 1, 1}, 1 }, p2{ {0, 1, 0}, 2 }, p3{ {1, 1, -1}, 3 }, p4{ {1, 0, -2}, 2 };
+        LinearSystem<double> s{ p1, p2, p3, p4 };
+        s.computeTriangularForm();
+        EXPECT_TRUE(s[0] == p1 && s[1] == p2 && s[2].equalTo({ {0, 0, -2}, 2 }) && s[3].equalTo({ { 0, 0, 0 }, 0 }));
+    }
+
+    {
+        const Plane3d p1{ {0, 1, 1}, 1 }, p2{ {1, -1, 1}, 2 }, p3{ {1, 2, -5}, 3 };
+        LinearSystem<double> s{ p1, p2, p3 };
+        s.computeTriangularForm();
+        EXPECT_TRUE(s[0].equalTo({ {1, -1, 1}, 2 }) && s[1].equalTo({ {0, 1, 1}, 1 }) && s[2].equalTo({ {0, 0, -9}, -2 }));
+    }
 }

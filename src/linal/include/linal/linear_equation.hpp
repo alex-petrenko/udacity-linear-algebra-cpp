@@ -105,7 +105,7 @@ public:
     int firstNonZeroIndex() const
     {
         for (int i = 0; i < norm.ndim(); ++i)
-            if (norm[i] > epsilon())
+            if (std::abs(norm[i]) > epsilon())
                 return i;
         return -1;
     }
@@ -183,6 +183,12 @@ public:  // friends defined inside class body are also inline and can be found t
         using std::swap;  // proper use of ADL (argument dependent lookup)
         swap(eq1.norm, eq2.norm);  // should call cheap Vec's swap
         swap(eq1.c, eq2.c);
+    }
+
+    friend std::ostream & operator<<(std::ostream &stream, const LinearEquation<T> &eq)
+    {
+        stream << eq.norm << " = " << eq.c;
+        return stream;
     }
 
 protected:

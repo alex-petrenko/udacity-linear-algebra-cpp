@@ -57,7 +57,7 @@ public:
 
                 if (idx == i)
                 {
-                    rowWithIthVar = i;  // found row with leading i-th variable
+                    rowWithIthVar = j;  // found row with leading i-th variable
                     break;
                 }
             }
@@ -70,22 +70,24 @@ public:
 
             // swap row with "current" row
             if (rowWithIthVar != i)
-            {
-                std::cout << "Swapped " << rowWithIthVar << " with " << i << std::endl;
                 swapRows(i, rowWithIthVar);
-            }
 
             // subtract found row from all rows below
             for (int j = i + 1; j < int(eqs.size()); ++j)
             {
                 auto coeff = -1.0f / eqs[i].normVector()[i];
                 coeff *= eqs[j].normVector()[i];
-                std::cout << "Multiplied " << j << " by " << i << " times " << coeff << std::endl;
                 eqs[j].add(eqs[i], coeff);
             }
-
-            std::cout << "Finished for variable " << i << std::endl;
         }
+    }
+
+public:
+    friend std::ostream & operator<<(std::ostream &stream, const LinearSystem<T> &s)
+    {
+        for (const auto &eq : s.eqs)
+            stream << eq << std::endl;
+        return stream;
     }
 
 private:
