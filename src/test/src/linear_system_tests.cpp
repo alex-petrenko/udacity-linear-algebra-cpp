@@ -23,10 +23,10 @@ TEST(linearSystem, testAccess)
         { { 1, 1, 1 }, 1 },
         { { 2, 2, 2 }, 2 },
     };
-    EXPECT_TRUE(csys[0].normVector().equalTo({ 1, 1, 1 }) && csys[0].constTerm() == 1);
+    EXPECT_TRUE(csys[0].equalTo({ { 1, 1, 1 }, 1 }));
     LinearSystem<int> sys{ csys };
     sys[1] = LinearEquation<int>{ {1, 2, 3 }, 4 };
-    EXPECT_TRUE(sys[1].normVector().equalTo({ 1, 2, 3 }) && sys[1].constTerm() == 4);
+    EXPECT_TRUE(sys[1].equalTo({ { 1, 2, 3 }, 4 }));
 }
 
 TEST(linearSystem, testRowOperations)
@@ -85,5 +85,41 @@ TEST(linearSystem, testTriangularForm)
         LinearSystem<double> s{ p1, p2, p3 };
         s.computeTriangularForm();
         EXPECT_TRUE(s[0].equalTo({ {1, -1, 1}, 2 }) && s[1].equalTo({ {0, 1, 1}, 1 }) && s[2].equalTo({ {0, 0, -9}, -2 }));
+        s.computeTriangularForm();
+        EXPECT_TRUE(s[0].equalTo({ { 1, -1, 1 }, 2 }) && s[1].equalTo({ { 0, 1, 1 }, 1 }) && s[2].equalTo({ { 0, 0, -9 }, -2 }));
+    }
+}
+
+TEST(linearSystem, testRREF)
+{
+    {
+        const Plane3d p1{ {1, 1, 1}, 1 }, p2{ {0, 1, 1}, 2 };
+        LinearSystem<double> s{ p1, p2 };
+        s.computeRREF();
+        EXPECT_TRUE(s[0].equalTo({ {1, 0, 0}, -1 }) && s[1] == p2);
+    }
+
+    {
+        const Plane3d p1{ {1, 1, 1}, 1 }, p2{ {1, 1, 1}, 2 };
+        LinearSystem<double> s{ p1, p2 };
+        s.computeRREF();
+        EXPECT_TRUE(s[0] == p1 && s[1].equalTo({ {0, 0, 0}, 1 }));
+    }
+
+    {
+        const Plane3d p1{ {1, 1, 1}, 1 }, p2{ {0, 1, 0}, 2 }, p3{ {1, 1, -1}, 3 }, p4{ {1, 0, -2}, 2 };
+        LinearSystem<double> s{ p1, p2, p3, p4 };
+        s.computeRREF();
+        s[2].equalTo({ { 0, 0, 1 }, -1 });
+        EXPECT_TRUE(s[0].equalTo({ {1, 0, 0}, 0 }) && s[1] == p2 && s[2].almostEqualTo({ {0, 0, 1}, -1 }) && s[3].equalTo({ {0, 0, 0}, 0 }));
+    }
+
+    {
+        const Plane3d p1{ {0, 1, 1}, 1 }, p2{ {1, -1, 1}, 2 }, p3{ {1, 2, -5}, 3 };
+        LinearSystem<double> s{ p1, p2, p3 };
+        s.computeRREF();
+        EXPECT_TRUE(s[0].equalTo({ {1, 0, 0}, 23.0 / 9.0 }));
+        EXPECT_TRUE(s[1].equalTo({ {0, 1, 0}, 7.0 / 9.0 }));
+        EXPECT_TRUE(s[2].almostEqualTo({ {0, 0, 1}, 2.0 / 9.0 }));
     }
 }

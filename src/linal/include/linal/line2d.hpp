@@ -60,7 +60,7 @@ public:
 
         // find the actual intersection point
         const T A = norm[0], B = norm[1], k1 = c;
-        const S C = line.normVector()[0], D = line.normVector()[1], k2 = line.constTerm();
+        const S C = line[0], D = line[1], k2 = line.constTerm();
 
         /* These formulas come from system of equations
         * 1) Ax + By = k1

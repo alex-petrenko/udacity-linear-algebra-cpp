@@ -53,7 +53,7 @@ public:
     template <typename S>
     bool operator==(const LinearEquation<S> &eq) const
     {
-        assert(norm.ndim() == eq.normVector().ndim());
+        assert(norm.ndim() == eq.ndim());
         return norm == eq.normVector() && c == eq.constTerm();
     }
 
@@ -70,6 +70,18 @@ public:
         return *this;
     }
 
+    T & operator[](int idx)
+    {
+        assert(idx >= 0 && idx < norm.ndim());
+        return norm[idx];
+    }
+
+    const T & operator[](int idx) const
+    {
+        assert(idx >= 0 && idx < norm.ndim());
+        return norm[idx];
+    }
+
     /// See Vec<T> comments to understand why two versions of this function are required.
     bool equalTo(const LinearEquation<T> &eq) const
     {
@@ -80,6 +92,17 @@ public:
     bool equalTo(const LinearEquation<S> &eq) const
     {
         return *this == eq;
+    }
+
+    bool almostEqualTo(const LinearEquation<T> &eq) const
+    {
+        return almostEqualTo<T>(eq);
+    }
+
+    template <typename S>
+    bool almostEqualTo(const LinearEquation<S> &eq) const
+    {
+        return norm.almostEqualTo(eq.normVector()) && std::abs(c - eq.constTerm()) <= epsilon();
     }
 
     Vec<T> & normVector()
@@ -113,9 +136,9 @@ public:
     template <typename S, typename SCALAR_T>
     void add(const LinearEquation<S> &eq, const SCALAR_T &multiplier)
     {
-        assert(eq.normVector().ndim() == norm.ndim());
-        for (int i = 0; i < norm.ndim(); ++i)
-            norm[i] += eq.normVector()[i] * multiplier;
+        assert(eq.ndim() == ndim());
+        for (int i = 0; i < ndim(); ++i)
+            norm[i] += eq[i] * multiplier;
         c += eq.constTerm() * multiplier;
     }
 
@@ -123,11 +146,11 @@ public:
     auto basepoint() const
     {
         using PNT_T = decltype(float() / T());
-        auto res = Vec<PNT_T>(norm.ndim(), PNT_T(0));
-        for (int i = 0; i < norm.ndim(); ++i)
+        auto res = Vec<PNT_T>(ndim(), PNT_T(0));
+        for (int i = 0; i < ndim(); ++i)
             if (std::abs(norm[i]) >= epsilon())
             {
-                res[i] = PNT_T(c) / norm[i];  // zero the rest of the coordinates
+                res[i] = PNT_T(c) / norm[i];  // the rest of the coordinates are zero
                 return res;
             }
 
@@ -139,7 +162,7 @@ public:
     template <typename S>
     bool isParallelTo(const LinearEquation<S> &obj) const
     {
-        assert(norm.ndim() == obj.normVector().ndim());
+        assert(ndim() == obj.ndim());
         return norm.isParallelTo(obj.normVector());
     }
 
@@ -168,7 +191,7 @@ public:
     template <typename S>
     IntersectionType getIntersectionType(const LinearEquation<S> &obj) const
     {
-        assert(norm.ndim() == obj.normVector().ndim());
+        assert(ndim() == obj.ndim());
         if (isSameAs(obj))
             return IntersectionType::COINCIDE;
         else if (isParallelTo(obj))

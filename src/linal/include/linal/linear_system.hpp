@@ -32,7 +32,7 @@ public:
     void swapRows(int i, int j)
     {
         assert(i >= 0 && i < int(eqs.size()) && j >= 0 && j < int(eqs.size()));
-        assert(eqs[i].normVector().ndim() == eqs[j].normVector().ndim());
+        assert(eqs[i].ndim() == eqs[j].ndim());
         swap(eqs[i], eqs[j]);  // very cheap operation
     }
 
@@ -75,10 +75,30 @@ public:
             // subtract found row from all rows below
             for (int j = i + 1; j < int(eqs.size()); ++j)
             {
-                auto coeff = -1.0f / eqs[i].normVector()[i];
-                coeff *= eqs[j].normVector()[i];
+                const auto coeff = (-1.0f / eqs[i][i]) * eqs[j][i];
                 eqs[j].add(eqs[i], coeff);
             }
+        }
+    }
+
+    /// Computes reduced row-echelon form in-place.
+    void computeRREF()
+    {
+        computeTriangularForm();
+
+        // iterate from last to first row, eliminating leading variable from rows above
+        for (int i = int(eqs.size()) - 1; i >= 0; --i)
+        {
+            const int idx = eqs[i].firstNonZeroIndex();
+            if (idx == -1)  // no variables (0 = 0 or 0 = k)
+                continue;
+
+            // make sure coefficient at leading variable is one
+            eqs[i] *= 1.0f / eqs[i][idx];
+
+            // subtract row from all rows above
+            for (int j = i - 1; j >= 0; --j)
+                eqs[j].add(eqs[i], -eqs[j][idx]);
         }
     }
 

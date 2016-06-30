@@ -24,7 +24,7 @@ TEST(linearEquation, testCtor)
         EXPECT_TRUE(eq1.normVector() == v && eq1.constTerm() == 10);
         // Pass rvalue. 'v' is moved to ctor argument and then argument is moved to eq.norm (MOVE+MOVE)
         const LinearEquation<int> eq2{ std::move(v), 10 };
-        EXPECT_TRUE(eq1.normVector().equalTo({ 1, 2 }) && eq1.constTerm() == 10);
+        EXPECT_TRUE(eq1.equalTo({ {1, 2}, 10 }));
 
         // v was swapped with default-created Vec, so it is just empty now
         EXPECT_TRUE(v.ndim() == 0 && v.ptr() == nullptr);
@@ -55,14 +55,14 @@ TEST(linearEquation, testSwap)
 {
     LinearEquation<int> eq1{ {1, 2}, 3 }, eq2{ {0, -1}, 0 };
     swap(eq1, eq2);
-    EXPECT_TRUE(eq1.normVector().equalTo({ 0, -1 }) && eq1.constTerm() == 0);
-    EXPECT_TRUE(eq2.normVector().equalTo({ 1, 2 }) && eq2.constTerm() == 3);
+    EXPECT_TRUE(eq1.equalTo({ {0, -1}, 0 }));
+    EXPECT_TRUE(eq2.equalTo({ { 1, 2 }, 3 }));
 }
 
 TEST(linearEquation, testMove)
 {
     LinearEquation<int> eq1{ {1, 2}, 3 };
     LinearEquation<int> eq2 = std::move(eq1);  // eq1 should be zero after move
-    EXPECT_TRUE(eq1.normVector().ndim() == 0);
-    EXPECT_TRUE(eq2.normVector().equalTo({ 1, 2 }) && eq2.constTerm() == 3);
+    EXPECT_TRUE(eq1.ndim() == 0);
+    EXPECT_TRUE(eq2.equalTo({ { 1, 2 }, 3 }));
 }
