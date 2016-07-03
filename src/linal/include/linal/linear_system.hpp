@@ -1,10 +1,45 @@
 #pragma once
 
+#include <map>
+
 #include <linal/linear_equation.hpp>
 
 
 namespace Linal
 {
+
+enum class SolutionType
+{
+    UNKNOWN,
+    UNIQUE,
+    PARAMETRIZATION,
+    NO_SOLUTIONS,
+};
+
+template <typename T>
+class LinearSystemSolution
+{
+public:
+    LinearSystemSolution(SolutionType type, std::map<int, T> values = std::map<int, T>())
+        : type{ type }
+        , values{ std::move(values) }
+    {
+    }
+
+public:
+    friend std::ostream & operator<<(std::ostream &stream, const LinearSystemSolution<T> &s)
+    {
+        stream << "[Type: " << int(s.type) << " values: {";
+        for (const auto &value : s.values)
+            stream << value.first << ": " << value.second << ", ";
+        stream << "}";
+        return stream;
+    }
+
+public:
+    std::map<int, T> values;
+    SolutionType type = SolutionType::UNKNOWN;
+};
 
 template <typename T>
 class LinearSystem
@@ -100,6 +135,31 @@ public:
             for (int j = i - 1; j >= 0; --j)
                 eqs[j].add(eqs[i], -eqs[j][idx]);
         }
+    }
+
+    auto computeSolution()
+    {
+        computeRREF();
+
+        std::map<int, T> values;
+        for (const auto &eq : eqs)
+        {
+            const int idx = eq.firstNonZeroIndex();
+            if (idx == -1)
+            {
+                // row 0x + 0y + 0z = ?
+                if (eq.constTerm() != 0)  // contradiction
+                    return LinearSystemSolution<T>(SolutionType::NO_SOLUTIONS);
+
+                continue;
+            }
+
+            assert(!values.count(idx));
+            values[idx] = eq.constTerm();
+        }
+
+        const SolutionType type = (values.size() == eqs.front().ndim()) ? SolutionType::UNIQUE : SolutionType::PARAMETRIZATION;
+        return LinearSystemSolution<T>(type, std::move(values));
     }
 
 public:
