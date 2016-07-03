@@ -214,7 +214,7 @@ public:  // friends defined inside class body are also inline and can be found t
         return stream;
     }
 
-protected:
+public:
     static constexpr double epsilon()
     {
         return 1e-5;

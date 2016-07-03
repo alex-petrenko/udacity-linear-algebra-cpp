@@ -121,6 +121,8 @@ public:
     {
         computeTriangularForm();
 
+        std::cout << *this << std::endl;
+
         // iterate from last to first row, eliminating leading variable from rows above
         for (int i = int(eqs.size()) - 1; i >= 0; --i)
         {
@@ -141,18 +143,26 @@ public:
     {
         computeRREF();
 
+        std::cout << *this << std::endl;
+
         std::map<int, T> values;
         for (const auto &eq : eqs)
         {
-            const int idx = eq.firstNonZeroIndex();
+            int idx = -1, numNonZero = 0;
+            for (int i = 0; i < eq.ndim(); ++i)
+                if (std::abs(eq[i]) > eq.epsilon())
+                    idx = i, ++numNonZero;
+
             if (idx == -1)
             {
                 // row 0x + 0y + 0z = ?
-                if (eq.constTerm() != 0)  // contradiction
+                if (std::abs(eq.constTerm()) > eq.epsilon())  // contradiction
                     return LinearSystemSolution<T>(SolutionType::NO_SOLUTIONS);
 
                 continue;
             }
+            else if (numNonZero > 1)
+                continue;
 
             assert(!values.count(idx));
             values[idx] = eq.constTerm();
