@@ -35,8 +35,8 @@ public:
         std::fill(data, data + size, value);
     }
 
-    template <typename INIT_T>
-    Vec(std::initializer_list<INIT_T> l)
+    template <typename T>
+    Vec(std::initializer_list<T> l)
         : Vec(l.size())
     {
         /* Currently there's no way to move from initializer_list, so we're copying.

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <map>
-
 #include <linal/linear_equation.hpp>
 
 
@@ -16,28 +14,38 @@ enum class SolutionType
     NO_SOLUTIONS,
 };
 
+/// Represents solution as parameterization:
+/// solutionSet = basepoint + v1 * t + v2 * s + ...
 template <typename T>
 class LinearSystemSolution
 {
 public:
-    LinearSystemSolution(SolutionType type, std::map<int, T> values = std::map<int, T>())
+    explicit LinearSystemSolution(SolutionType type, Vec<T> basepoint = Vec<T>{}, std::vector<Vec<T>> parametrization = std::vector<Vec<T>>{})
         : type{ type }
-        , values{ std::move(values) }
+        , basepoint(std::move(basepoint))
+        , parametrization(std::move(parametrization))
     {
     }
 
 public:
     friend std::ostream & operator<<(std::ostream &stream, const LinearSystemSolution<T> &s)
     {
-        stream << "[Type: " << int(s.type) << " values: {";
-        for (const auto &value : s.values)
-            stream << value.first << ": " << value.second << ", ";
-        stream << "}";
+        stream << "[Type: " << int(s.type);
+        if (s.type == SolutionType::UNIQUE || s.type == SolutionType::PARAMETRIZATION)
+        {
+            stream << " Solution: [" << s.basepoint;
+            for (int i = 0; i < int(s.parametrization.size()); ++i)
+                if (!s.parametrization[i].isZero())
+                    stream << " + " << s.parametrization[i] << "*t" << (i + 1);
+            stream << "]";
+        }
+        stream << "]";
         return stream;
     }
 
 public:
-    std::map<int, T> values;
+    Vec<T> basepoint;
+    std::vector<Vec<T>> parametrization;
     SolutionType type = SolutionType::UNKNOWN;
 };
 
@@ -66,7 +74,7 @@ public:
 
     void swapRows(int i, int j)
     {
-        assert(i >= 0 && i < int(eqs.size()) && j >= 0 && j < int(eqs.size()));
+        assert(i >= 0 && i < int(eqs.size()) && j >= 0 && j < int(eqs.size()) && i != j);
         assert(eqs[i].ndim() == eqs[j].ndim());
         swap(eqs[i], eqs[j]);  // very cheap operation
     }
@@ -104,7 +112,7 @@ public:
             }
 
             // swap row with "current" row
-            if (rowWithIthVar != i)
+            if (rowWithIthVar > i)
                 swapRows(i, rowWithIthVar);
 
             // subtract found row from all rows below
@@ -120,8 +128,6 @@ public:
     void computeRREF()
     {
         computeTriangularForm();
-
-        std::cout << *this << std::endl;
 
         // iterate from last to first row, eliminating leading variable from rows above
         for (int i = int(eqs.size()) - 1; i >= 0; --i)
@@ -143,16 +149,13 @@ public:
     {
         computeRREF();
 
-        std::cout << *this << std::endl;
-
-        std::map<int, T> values;
+        const int ndim = eqs.front().ndim();
+        Vec<T> basepoint(ndim, T(0));
+        std::vector<Vec<T>> parametrization(ndim, Vec<T>(ndim, T(0)));
+        bool uniqueSolution = true;
         for (const auto &eq : eqs)
         {
-            int idx = -1, numNonZero = 0;
-            for (int i = 0; i < eq.ndim(); ++i)
-                if (std::abs(eq[i]) > eq.epsilon())
-                    idx = i, ++numNonZero;
-
+            const int idx = eq.firstNonZeroIndex();
             if (idx == -1)
             {
                 // row 0x + 0y + 0z = ?
@@ -161,15 +164,22 @@ public:
 
                 continue;
             }
-            else if (numNonZero > 1)
-                continue;
 
-            assert(!values.count(idx));
-            values[idx] = eq.constTerm();
+            basepoint[idx] = eq.constTerm();
+            for (int i = idx + 1; i < ndim; ++i)
+                if (std::abs(eq[i]) > eq.epsilon())
+                {
+                    uniqueSolution = false;
+
+                    parametrization[i][idx] = -eq[i];  // idx variable depends on i-th variable (e.g. x + 2y = 10  -->  x = 10 - 2y)
+
+                    assert(parametrization[i][i] == T(0) || parametrization[i][i] == T(1));
+                    parametrization[i][i] = T(1);  // i-th variable is a free variable (e.g. z = z)
+                }
         }
 
-        const SolutionType type = (values.size() == eqs.front().ndim()) ? SolutionType::UNIQUE : SolutionType::PARAMETRIZATION;
-        return LinearSystemSolution<T>(type, std::move(values));
+        const SolutionType type = uniqueSolution ? SolutionType::UNIQUE : SolutionType::PARAMETRIZATION;
+        return LinearSystemSolution<T>(type, std::move(basepoint), std::move(parametrization));
     }
 
 public:
